@@ -43,6 +43,35 @@ var TestJSON = Suite.new("JSON") { |it|
       Expect.call(parsedList).toBe(List)
       Expect.call(parsedList.count).toEqual(2)
     }
+
+    var nestedMaps = "
+      [{
+        \"some\": \"thing\",
+        \"other\": [1, 2, 3, 4, 5]
+      }, {
+        \"more\": {
+          \"don't\": \"stop\"
+        }
+      }]
+    "
+
+    it.should("handle nested Maps") {
+      var parsedNested = JSON.parse(nestedMaps)
+
+      Expect.call(parsedNested).toBe(List)
+      Expect.call(parsedNested.count).toEqual(2)
+      for (item in parsedNested) { Expect.call(item).toBe(Map) }
+
+      Expect.call(parsedNested[0]["some"]).toEqual("thing")
+
+      var other = parsedNested[0]["other"]
+      Expect.call(other).toBe(List)
+      Expect.call(other.count).toEqual(5)
+      for (item in other) { Expect.call(item).toBe(Num)}
+
+      var more = parsedNested[1]["more"]
+      Expect.call(more["don't"]).toEqual("stop")
+    }
   }
 }
 
