@@ -75,6 +75,28 @@ var TestJSON = Suite.new("JSON") { |it|
   }
 
   it.suite("stringify") { |it|
+    it.should("wrap strings in quotes") {
+      Expect.call(JSON.stringify("hello")).toEqual("\"hello\"")
+    }
+
+    it.should("convert Bools into their string form") {
+      Expect.call(JSON.stringify(true)).toEqual("true")
+      Expect.call(JSON.stringify(false)).toEqual("false")
+    }
+
+    it.should("convert Nums into their string form") {
+      Expect.call(JSON.stringify(2)).toEqual("2")
+      Expect.call(JSON.stringify(-3.5)).toEqual("-3.5")
+    }
+
+    it.should("handle a basic Map") {
+      Expect.call(JSON.stringify({})).toEqual("{}")
+    }
+
+    it.should("handle a basic List") {
+      Expect.call(JSON.stringify([])).toEqual("[]")
+    }
+
     var object = [{
       "some": "thing"
     }, {
@@ -85,7 +107,7 @@ var TestJSON = Suite.new("JSON") { |it|
       "b": true
     }]
 
-    it.should("handle object") {
+    it.should("handle a nested object") {
       var result = "[{\"some\":\"thing\"},{\"other\":[1,2,3,4]},{\"a\":null},{\"b\":true}]"
       Expect.call(JSON.stringify(object)).toEqual(result)
     }
