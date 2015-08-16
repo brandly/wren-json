@@ -26,6 +26,7 @@ class JSONParser {
   tokenBool { "BOOL" }
   tokenNull { "NULL"}
   numberChars { "0123456789.-" }
+  valueTypes { [tokenString, tokenNumber, tokenBool, tokenNull] }
 
   parse { nest(tokenize) }
 
@@ -73,9 +74,10 @@ class JSONParser {
 
       return list
 
-    } else {
+    } else if (valueTypes.contains(token.type)) {
       return token.value
-    }
+
+    } else { parsingError }
   }
 
   tokenize {
