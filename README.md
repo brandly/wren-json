@@ -7,6 +7,7 @@
 ```scala
 import "json" for JSON
 JSON.parse(string)
+JSON.stringify(object)
 ```
 
 ## test

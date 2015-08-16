@@ -73,6 +73,19 @@ var TestJSON = Suite.new("JSON") { |it|
       Expect.call(more["don't"]).toEqual("stop")
     }
   }
+
+  it.suite("stringify") { |it|
+    var object = [{
+      "some": "thing"
+    }, {
+      "other": [1, 2, 3, 4]
+    }]
+
+    it.should("handle object") {
+      var result = "[{\"some\":\"thing\"},{\"other\":[1,2,3,4]}]"
+      Expect.call(JSON.stringify(object)).toEqual(result)
+    }
+  }
 }
 
 {

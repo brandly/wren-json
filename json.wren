@@ -4,8 +4,39 @@ class JSON {
     return JSONParser.new(string).parse
   }
 
+  static stringify(object) {
+    return JSONStringifier.new(object).toString
+  }
+
   static tokenize(string) {
     return JSONParser.new(string).tokenize
+  }
+}
+
+class JSONStringifier {
+  construct new(object) {
+    _object = object
+  }
+
+  toString { stringify(_object) }
+
+  stringify(obj) {
+    if (obj is Num) {
+      return obj.toString
+    } else if (obj is String) {
+      // TODO: escape things
+      return "\"" + obj + "\""
+
+    } else if (obj is List) {
+      var substrings = obj.map { |o| stringify(o) }
+      return "[" + substrings.join(",") + "]"
+
+    } else if (obj is Map) {
+      var substrings = obj.keys.map { |key|
+        return stringify(key) + ":" + stringify(obj[key])
+      }
+      return "{" + substrings.join(",") + "}"
+    }
   }
 }
 
