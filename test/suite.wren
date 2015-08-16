@@ -2,7 +2,7 @@ import "test-framework" for Expect, Suite, ConsoleReporter
 import "../json" for JSON, JSONParser, Token
 
 var TestJSON = Suite.new("JSON") { |it|
-  var mapString = "{ \"age\": 18, \"name\": \"ethan\", \"cool\": false }"
+  var mapString = "{ \"age\": 18, \"name\": \"ethan\", \"cool\": false, \"friends\": null }"
   var arrayString = "[{ \"brand\": \"taylor\" }, { \"brand\": \"martin\"}]"
   var parser = JSONParser.new("{}")
 
@@ -10,7 +10,7 @@ var TestJSON = Suite.new("JSON") { |it|
     it.should("handle basic string") {
       var tokens = JSON.tokenize(mapString)
 
-      Expect.call(tokens.count).toEqual(13)
+      Expect.call(tokens.count).toEqual(17)
       for (token in tokens) { Expect.call(token).toBe(Token) }
 
       Expect.call(tokens[0].type).toEqual(parser.tokenLeftBrace)
@@ -32,6 +32,7 @@ var TestJSON = Suite.new("JSON") { |it|
       Expect.call(parsedMap["name"]).toEqual("ethan")
       Expect.call(parsedMap["age"]).toEqual(18)
       Expect.call(parsedMap["cool"]).toBeFalse
+      Expect.call(parsedMap["friends"]).toBeNull
     }
   }
 

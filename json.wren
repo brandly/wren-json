@@ -24,7 +24,8 @@ class JSONParser {
   tokenString { "STRING" }
   tokenNumber { "NUMBER" }
   tokenBool { "BOOL" }
-  numberChars { "0123456789.-"}
+  tokenNull { "NULL"}
+  numberChars { "0123456789.-" }
 
   parse { nest(tokenize) }
 
@@ -39,9 +40,9 @@ class JSONParser {
 
       while (tokens[0].type != tokenRightBrace) {
         var key = tokens.removeAt(0)
+        if (key.type != tokenString) { parsingError }
 
-        var colon = tokens.removeAt(0)
-        if (colon.type != tokenColon) { parsingError }
+        if ((tokens.removeAt(0)).type != tokenColon) { parsingError }
 
         var value = nest(tokens)
         map[key.value] = value
@@ -145,6 +146,8 @@ class JSONParser {
           addToken(tokenBool, true)
         } else if (slicedInput.startsWith("false")) {
           addToken(tokenBool, false)
+        } else if (slicedInput.startsWith("null")) {
+          addToken(tokenNull, null)
         }
       }
 
