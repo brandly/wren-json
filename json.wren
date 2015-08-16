@@ -21,7 +21,7 @@ class JSONStringifier {
   toString { stringify(_object) }
 
   stringify(obj) {
-    if (obj is Num) {
+    if (obj is Num || obj is Bool || obj is Null) {
       return obj.toString
     } else if (obj is String) {
       // TODO: escape things

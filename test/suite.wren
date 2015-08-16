@@ -79,10 +79,14 @@ var TestJSON = Suite.new("JSON") { |it|
       "some": "thing"
     }, {
       "other": [1, 2, 3, 4]
+    }, {
+      "a": null
+    }, {
+      "b": true
     }]
 
     it.should("handle object") {
-      var result = "[{\"some\":\"thing\"},{\"other\":[1,2,3,4]}]"
+      var result = "[{\"some\":\"thing\"},{\"other\":[1,2,3,4]},{\"a\":null},{\"b\":true}]"
       Expect.call(JSON.stringify(object)).toEqual(result)
     }
   }
