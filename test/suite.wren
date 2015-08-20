@@ -111,6 +111,34 @@ var TestJSON = Suite.new("JSON") { |it|
       var result = "[{\"some\":\"thing\"},{\"other\":[1,2,3,4]},{\"a\":null},{\"b\":true}]"
       Expect.call(JSON.stringify(object)).toEqual(result)
     }
+
+    it.should("handle double quotes in strings") {
+      Expect.call(JSON.stringify("hey \" man")).toEqual("\"hey \\\" man\"")
+    }
+
+    it.should("handle backslashes in strings") {
+      Expect.call(JSON.stringify("hey \\ man")).toEqual("\"hey \\\\ man\"")
+    }
+
+    it.should("handle backspaces in strings") {
+      Expect.call(JSON.stringify("hey \b man")).toEqual("\"hey \\b man\"")
+    }
+
+    it.should("handle formfeeds in strings") {
+      Expect.call(JSON.stringify("hey \f man")).toEqual("\"hey \\f man\"")
+    }
+
+    it.should("handle newlines in strings") {
+      Expect.call(JSON.stringify("hey \n man")).toEqual("\"hey \\n man\"")
+    }
+
+    it.should("handle carriage returns in strings") {
+      Expect.call(JSON.stringify("hey \r man")).toEqual("\"hey \\r man\"")
+    }
+
+    it.should("handle horizontal tabs in strings") {
+      Expect.call(JSON.stringify("hey \t man")).toEqual("\"hey \\t man\"")
+    }
   }
 }
 

@@ -24,8 +24,28 @@ class JSONStringifier {
     if (obj is Num || obj is Bool || obj is Null) {
       return obj.toString
     } else if (obj is String) {
-      // TODO: escape things
-      return "\"" + obj + "\""
+      var substrings = []
+      // Escape special characters
+      for (char in obj) {
+        if (char == "\"") {
+          substrings.add("\\\"")
+        } else if (char == "\\") {
+          substrings.add("\\\\")
+        } else if (char == "\b") {
+          substrings.add("\\b")
+        } else if (char == "\f") {
+          substrings.add("\\f")
+        } else if (char == "\n") {
+          substrings.add("\\n")
+        } else if (char == "\r") {
+          substrings.add("\\r")
+        } else if (char == "\t") {
+          substrings.add("\\t")
+        } else {
+          substrings.add(char)
+        }
+      }
+      return "\"" + substrings.join("") + "\""
 
     } else if (obj is List) {
       var substrings = obj.map { |o| stringify(o) }
