@@ -102,6 +102,11 @@ var TestJSON = Suite.new("JSON") { |it|
     it.should("handle horizontal tabs in strings") {
       Expect.call(JSON.parse("\"hey \\t man\"")).toEqual("hey \t man")
     }
+
+    it.should("throw for a random slash") {
+      var fiberWithError = Fiber.new { JSON.parse("\"hey \\man\"") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
   }
 
   it.suite("stringify") { |it|

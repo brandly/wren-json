@@ -78,6 +78,17 @@ class JSONParser {
   tokenNull { "NULL"}
   numberChars { "0123456789.-" }
   valueTypes { [tokenString, tokenNumber, tokenBool, tokenNull] }
+  escapedCharMap {
+    return {
+      "\"": "\"",
+      "\\": "\\",
+      "b": "\b",
+      "f": "\f",
+      "n": "\n",
+      "r": "\r",
+      "t": "\t"
+    }
+  }
 
   parse { nest(tokenize) }
 
@@ -135,6 +146,7 @@ class JSONParser {
     if (_tokens.count > 0) { _tokens }
 
     var inString = false
+    var isEscaping = false
     var inNumber = false
     var valueInProgress = []
 
@@ -142,15 +154,30 @@ class JSONParser {
     while (i < _input.count) {
       var char = _input[i]
 
-      if (inString && char != "\"") {
-        valueInProgress.add(char)
+      if (inString) {
 
-      } else if (char == "\"") {
-        if (inString) {
+        if (isEscaping) {
+          if (escapedCharMap.containsKey(char)) {
+            valueInProgress.add(escapedCharMap[char])
+          } else {
+            parsingError
+          }
+
+          isEscaping = false
+        } else if (char == "\\") {
+          isEscaping = true
+
+        } else if (char == "\"") {
           addToken(tokenString, valueInProgress.join(""))
           valueInProgress = []
+          inString = false
+
+        } else {
+          valueInProgress.add(char)
         }
-        inString = !inString
+
+      } else if (char == "\"") {
+        inString = true
 
       } else if (inNumber) {
         if (numberChars.contains(char)) {
