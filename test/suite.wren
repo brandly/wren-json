@@ -74,6 +74,41 @@ var TestJSON = Suite.new("JSON") { |it|
     }
   }
 
+  it.suite("parse special characters") { |it|
+    it.should("handle double quotes in strings") {
+      Expect.call(JSON.parse("\"hey \\\" man\"")).toEqual("hey \" man")
+    }
+
+    it.should("handle backslashes in strings") {
+      Expect.call(JSON.parse("\"hey \\\\ man\"")).toEqual("hey \\ man")
+    }
+
+    it.should("handle backspaces in strings") {
+      Expect.call(JSON.parse("\"hey \\b man\"")).toEqual("hey \b man")
+    }
+
+    it.should("handle formfeeds in strings") {
+      Expect.call(JSON.parse("\"hey \\f man\"")).toEqual("hey \f man")
+    }
+
+    it.should("handle newlines in strings") {
+      Expect.call(JSON.parse("\"hey \\n man\"")).toEqual("hey \n man")
+    }
+
+    it.should("handle carriage returns in strings") {
+      Expect.call(JSON.parse("\"hey \\r man\"")).toEqual("hey \r man")
+    }
+
+    it.should("handle horizontal tabs in strings") {
+      Expect.call(JSON.parse("\"hey \\t man\"")).toEqual("hey \t man")
+    }
+
+    it.should("throw for a random slash") {
+      var fiberWithError = Fiber.new { JSON.parse("\"hey \\man\"") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+  }
+
   it.suite("stringify") { |it|
     it.should("wrap strings in quotes") {
       Expect.call(JSON.stringify("hello")).toEqual("\"hello\"")
