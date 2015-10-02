@@ -2,11 +2,11 @@ name = "json"
 
 [[dependencies]]
 name = "pure"
-git = "git@github.com:brandly/wren-pure.git"
+git = "https://github.com/brandly/wren-pure.git"
 version = "72a16e5c61d193b543b24a7776061ddc44a4d497"
 
 [[dependencies]]
 name = "test"
-git = "git@github.com:gsmaverick/wren-test.git"
+git = "https://github.com/gsmaverick/wren-test.git"
 version = "b6d966cdef4d43b4fdb25de05e09829276b61911"
 group = "test"
