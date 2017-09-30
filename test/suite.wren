@@ -214,10 +214,33 @@ var TestJSON = Suite.new("JSON") { |it|
     }
 
     // TODO: White Spaces
-    // TODO: NaN and Infinity
+
+    it.should("throw for NaN") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": NaN}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for Infinity") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": Infinity}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
 
     it.should("throw for hex numbers") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0xFF}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    // TODO: Exponential Notation
+
+    it.should("handle tricky arrays") {
+      var value = JSON.parse("[[],[[]]]")
+      Expect.call(value).toBe(List)
+      Expect.call(value.count).toEqual(2)
+      Expect.call(value[1].count).toEqual(1)
+    }
+
+    it.should("throw for colon instead of comma") {
+      var fiberWithError = Fiber.new { JSON.parse("[\"id\": 0]") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
   }
