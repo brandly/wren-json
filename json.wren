@@ -110,7 +110,9 @@ class JSONParser {
         var value = nest(tokens)
         map[key.value] = value
 
-        if (tokens[0].type == tokenComma) {
+        if (tokens.count >= 2 &&
+            tokens[0].type == tokenComma &&
+            tokens[1].type != tokenRightBrace) {
           tokens.removeAt(0)
         }
       }

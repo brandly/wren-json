@@ -21,6 +21,18 @@ var TestJSON = Suite.new("JSON") { |it|
     }
   }
 
+  it.suite("parse String") { |it|
+    var parsedString = JSON.parse("\"lonely string\"")
+
+    it.should("return a String") {
+      Expect.call(parsedString).toBe(String)
+    }
+
+    it.should("contain the correct contents") {
+      Expect.call(parsedString).toEqual("lonely string")
+    }
+  }
+
   it.suite("parse Map") { |it|
     var parsedMap = JSON.parse(mapString)
 
@@ -173,6 +185,13 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("handle horizontal tabs in strings") {
       Expect.call(JSON.stringify("hey \t man")).toEqual("\"hey \\t man\"")
+    }
+  }
+
+  it.suite("edge cases") { |it|
+    it.should("throw for trailing commas") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0,}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
   }
 }
