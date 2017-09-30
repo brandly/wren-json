@@ -198,6 +198,28 @@ var TestJSON = Suite.new("JSON") { |it|
       var fiberWithError = Fiber.new { JSON.parse("{// here comes an id\n\"id\": 0}") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
+
+    it.should("throw for unclosed structures") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\":") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("allow nested structures") {
+      var value = JSON.parse("[[[[]]]]")
+      Expect.call(value).toBe(List)
+      Expect.call(value.count).toEqual(1)
+      Expect.call(value[0].count).toEqual(1)
+      Expect.call(value[0][0].count).toEqual(1)
+      Expect.call(value[0][0][0].count).toEqual(0)
+    }
+
+    // TODO: White Spaces
+    // TODO: NaN and Infinity
+
+    it.should("throw for hex numbers") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0xFF}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
   }
 }
 

@@ -205,6 +205,12 @@ class JSONParser {
         valueInProgress.add(char)
         inNumber = true
 
+        var peek = i < (_input.count - 1) ? _input[i + 1] : null
+        if (char == "0" && peek == "x") {
+          // Don't allow hex numbers
+          parsingError
+        }
+
       } else if (char == "{") {
         addToken(tokenLeftBrace)
 
