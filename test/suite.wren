@@ -193,6 +193,11 @@ var TestJSON = Suite.new("JSON") { |it|
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0,}") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
+
+    it.should("throw for comments") {
+      var fiberWithError = Fiber.new { JSON.parse("{// here comes an id\n\"id\": 0}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
   }
 }
 

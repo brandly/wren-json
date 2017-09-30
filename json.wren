@@ -222,6 +222,9 @@ class JSONParser {
 
       } else if (char == ",") {
         addToken(tokenComma)
+      } else if (char == "/") {
+        // Don't allow comments
+        parsingError
       } else {
         var slicedInput = Helper.slice(_input, i).join("")
         if (slicedInput.startsWith("true")) {
