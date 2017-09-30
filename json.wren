@@ -110,7 +110,9 @@ class JSONParser {
         var value = nest(tokens)
         map[key.value] = value
 
-        if (tokens[0].type == tokenComma) {
+        if (tokens.count >= 2 &&
+            tokens[0].type == tokenComma &&
+            tokens[1].type != tokenRightBrace) {
           tokens.removeAt(0)
         }
       }
@@ -203,6 +205,12 @@ class JSONParser {
         valueInProgress.add(char)
         inNumber = true
 
+        var peek = i < (_input.count - 1) ? _input[i + 1] : null
+        if (char == "0" && peek == "x") {
+          // Don't allow hex numbers
+          parsingError
+        }
+
       } else if (char == "{") {
         addToken(tokenLeftBrace)
 
@@ -220,6 +228,9 @@ class JSONParser {
 
       } else if (char == ",") {
         addToken(tokenComma)
+      } else if (char == "/") {
+        // Don't allow comments
+        parsingError
       } else {
         var slicedInput = Helper.slice(_input, i).join("")
         if (slicedInput.startsWith("true")) {

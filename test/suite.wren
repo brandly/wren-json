@@ -21,6 +21,18 @@ var TestJSON = Suite.new("JSON") { |it|
     }
   }
 
+  it.suite("parse String") { |it|
+    var parsedString = JSON.parse("\"lonely string\"")
+
+    it.should("return a String") {
+      Expect.call(parsedString).toBe(String)
+    }
+
+    it.should("contain the correct contents") {
+      Expect.call(parsedString).toEqual("lonely string")
+    }
+  }
+
   it.suite("parse Map") { |it|
     var parsedMap = JSON.parse(mapString)
 
@@ -173,6 +185,63 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("handle horizontal tabs in strings") {
       Expect.call(JSON.stringify("hey \t man")).toEqual("\"hey \\t man\"")
+    }
+  }
+
+  it.suite("edge cases") { |it|
+    it.should("throw for trailing commas") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0,}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for comments") {
+      var fiberWithError = Fiber.new { JSON.parse("{// here comes an id\n\"id\": 0}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for unclosed structures") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\":") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("allow nested structures") {
+      var value = JSON.parse("[[[[]]]]")
+      Expect.call(value).toBe(List)
+      Expect.call(value.count).toEqual(1)
+      Expect.call(value[0].count).toEqual(1)
+      Expect.call(value[0][0].count).toEqual(1)
+      Expect.call(value[0][0][0].count).toEqual(0)
+    }
+
+    // TODO: White Spaces
+
+    it.should("throw for NaN") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": NaN}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for Infinity") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": Infinity}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for hex numbers") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0xFF}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    // TODO: Exponential Notation
+
+    it.should("handle tricky arrays") {
+      var value = JSON.parse("[[],[[]]]")
+      Expect.call(value).toBe(List)
+      Expect.call(value.count).toEqual(2)
+      Expect.call(value[1].count).toEqual(1)
+    }
+
+    it.should("throw for colon instead of comma") {
+      var fiberWithError = Fiber.new { JSON.parse("[\"id\": 0]") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
   }
 }
