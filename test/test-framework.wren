@@ -1,5 +1,3 @@
-// https://github.com/gsmaverick/wren-test
-
 /**
  * An Expectation captures an assertion about a value made in a test block. It
  * is used by the default matchers to communicate the pass/fail state of a test
@@ -160,7 +158,7 @@ class Runnable {
    * the test body.
    */
   run() {
-    var startTime = IO.clock
+    var startTime = System.clock
 
     for (fn in _beforeEaches) { fn.call() }
 
@@ -177,7 +175,7 @@ class Runnable {
 
     for (fn in _afterEaches) { fn.call() }
 
-    _duration = IO.clock - startTime
+    _duration = System.clock - startTime
 
     return _expectations
   }
@@ -401,14 +399,6 @@ class Stub {
 
     if (_fakeFn) {
       return _fakeFn.call([a, b, c, d, e, f, g, h, i])
-    }
-  }
-
-  call (a, b, c, d, e, f, g, h, i, j) {
-    _calls.add([a, b, c, d, e, f, g, h, i, j])
-
-    if (_fakeFn) {
-      return _fakeFn.call([a, b, c, d, e, f, g, h, i, j])
     }
   }
 
@@ -997,7 +987,7 @@ class ConsoleReporter is Reporter {
       "skipped": 0
     }
 
-    _startTime = IO.clock
+    _startTime = System.clock
   }
 
   getCount_ (kind) { _counters[kind].toString }
@@ -1010,10 +1000,10 @@ class ConsoleReporter is Reporter {
    * Prints out a summary of the test run reported on by this instance.
    */
   epilogue () {
-    var duration = ((IO.clock - _startTime) * 1000).ceil.toString
+    var duration = ((System.clock - _startTime) * 1000).ceil.toString
 
-    IO.print("")
-    IO.print("==== Tests Summary ====")
+    System.print("")
+    System.print("==== Tests Summary ====")
 
     var result = getCount_("tests") + " tests, " + getCount_("passed") +
       " passed, " + getCount_("failed") + " failed, " + getCount_("errors") +
@@ -1037,7 +1027,7 @@ class ConsoleReporter is Reporter {
   suiteEnd (title) {
     _indent = _indent - 1
 
-    if (_indent == 0) { IO.print("") }
+    if (_indent == 0) { System.print("") }
   }
 
   testStart (runnable) {
@@ -1091,7 +1081,7 @@ class ConsoleReporter is Reporter {
       result = result + " "
     }
 
-    IO.print(color + result + string + "\u001b[0m")
+    System.print(color + result + string + "\u001b[0m")
   }
 }
 
