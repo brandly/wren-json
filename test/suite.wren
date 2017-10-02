@@ -119,6 +119,10 @@ var TestJSON = Suite.new("JSON") { |it|
       var fiberWithError = Fiber.new { JSON.parse("\"hey \\man\"") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
+
+    it.should("handle bare numbers") {
+      Expect.call(JSON.parse("3.5")).toEqual(3.5)
+    }
   }
 
   it.suite("stringify") { |it|

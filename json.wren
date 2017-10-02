@@ -151,6 +151,7 @@ class JSONParser {
     var isEscaping = false
     var inNumber = false
     var valueInProgress = []
+    var lastIndex = _input.count - 1
 
     var i = 0
     while (i < _input.count) {
@@ -184,7 +185,10 @@ class JSONParser {
       } else if (inNumber) {
         if (numberChars.contains(char)) {
           valueInProgress.add(char)
-        } else {
+        }
+
+        // Check last index to support bare numbers
+        if (!numberChars.contains(char) || i == lastIndex) {
           var number = Num.fromString(valueInProgress.join(""))
 
           if (number == null) {
