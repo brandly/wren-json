@@ -145,8 +145,6 @@ class JSONParser {
   }
 
   tokenize {
-    if (_tokens.count > 0) { _tokens }
-
     var inString = false
     var isEscaping = false
     var inNumber = false
@@ -168,12 +166,12 @@ class JSONParser {
             var hexString = Helper.slice(_input, start, start + charsToPull).join("")
 
             var decimal = Helper.hexToDecimal(hexString)
-            if (decimal == null) parsingError
+            if (decimal == null) tokenizeError(i)
             valueInProgress.add(String.fromCodePoint(decimal))
 
             i = i + charsToPull
           } else {
-            parsingError
+            tokenizeError(i)
           }
 
           isEscaping = false
@@ -181,7 +179,7 @@ class JSONParser {
           isEscaping = true
 
         } else if (char == "\"") {
-          addToken(tokenString, valueInProgress.join(""))
+          addToken(i, tokenString, valueInProgress.join(""))
           valueInProgress = []
           inString = false
 
@@ -202,9 +200,9 @@ class JSONParser {
           var number = Num.fromString(valueInProgress.join(""))
 
           if (number == null) {
-            parsingError
+            tokenizeError(i)
           } else {
-            addToken(tokenNumber, number)
+            addToken(i, tokenNumber, number)
           }
 
           valueInProgress = []
@@ -222,37 +220,37 @@ class JSONParser {
         var peek = i < (_input.count - 1) ? _input[i + 1] : null
         if (char == "0" && peek == "x") {
           // Don't allow hex numbers
-          parsingError
+          tokenizeError(i)
         }
 
       } else if (char == "{") {
-        addToken(tokenLeftBrace)
+        addToken(i, tokenLeftBrace)
 
       } else if (char == "}") {
-        addToken(tokenRightBrace)
+        addToken(i, tokenRightBrace)
 
       } else if (char == "[") {
-        addToken(tokenLeftBracket)
+        addToken(i, tokenLeftBracket)
 
       } else if (char == "]") {
-        addToken(tokenRightBracket)
+        addToken(i, tokenRightBracket)
 
       } else if (char == ":") {
-        addToken(tokenColon)
+        addToken(i, tokenColon)
 
       } else if (char == ",") {
-        addToken(tokenComma)
+        addToken(i, tokenComma)
       } else if (char == "/") {
         // Don't allow comments
-        parsingError
+        tokenizeError(i)
       } else {
         var slicedInput = Helper.slice(_input, i).join("")
         if (slicedInput.startsWith("true")) {
-          addToken(tokenBool, true)
+          addToken(i, tokenBool, true)
         } else if (slicedInput.startsWith("false")) {
-          addToken(tokenBool, false)
+          addToken(i, tokenBool, false)
         } else if (slicedInput.startsWith("null")) {
-          addToken(tokenNull, null)
+          addToken(i, tokenNull, null)
         }
       }
 
@@ -262,18 +260,55 @@ class JSONParser {
     return _tokens
   }
 
-  addToken(type) { addToken(type, null) }
-  addToken(type, value) { _tokens.add(Token.new(type, value)) }
+  addToken(index, type) { addToken(index, type, null) }
+  addToken(index, type, value) { _tokens.add(Token.new(type, value, index)) }
 
+  tokenizeError {
+    invalidJSON("")
+  }
+  tokenizeError (index) {
+    var position = getPositionForIndex(index)
+    invalidJSON("Unexpected \"%(_input[index])\" at line %(position["line"]), column %(position["column"])")
+  }
   parsingError {
-    Fiber.abort("Invalid JSON")
+    if (_tokens.count > 0) {
+      var position = getPositionForIndex(_tokens[0].index)
+      var value = _tokens[0].value == null ? _tokens[0] : _tokens[0].value
+      invalidJSON("Unexpected \"%(value)\" at line %(position["line"]), column %(position["column"])")
+    } else {
+      invalidJSON("")
+    }
+  }
+  invalidJSON(message) {
+    var base = "Invalid JSON"
+    Fiber.abort(message.count > 0 ? "%(base): %(message)" : base)
+  }
+  getPositionForIndex (index) {
+    var precedingInput = Helper.slice(_input, 0, index)
+    var linebreaks = precedingInput.where {|char| char == "\n"}
+
+    var reversedPreceding = Helper.reverse(precedingInput)
+    var hasSeenLinebreak = false
+    var i = 0
+    while (i < reversedPreceding.count && !hasSeenLinebreak) {
+      if (reversedPreceding[i] == "\n") {
+        hasSeenLinebreak = true
+      }
+      i = i + 1
+    }
+
+    return {
+      "line": linebreaks.count,
+      "column": i
+    }
   }
 }
 
 class Token {
-  construct new(type, value) {
+  construct new(type, value, index) {
     _type = type
     _value = value
+    _index = index
   }
 
   toString {
@@ -282,6 +317,7 @@ class Token {
 
   type { _type }
   value { _value }
+  index { _index }
 }
 
 // TODO: use Pure when we have a nice module system
