@@ -247,6 +247,32 @@ var TestJSON = Suite.new("JSON") { |it|
       var fiberWithError = Fiber.new { JSON.parse("[\"id\": 0]") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
+
+    it.should("handle empty keys") {
+      var value = JSON.parse("{\"\": 0}")
+      Expect.call(value[""]).toEqual(0)
+    }
+
+    // Well-formed JSON shouldn't have duplicate keys. Behavior isn't standardized.
+    it.should("overwrite duplicate keys") {
+      var value = JSON.parse("{\"id\": 0, \"id\": 1}")
+      Expect.call(value["id"]).toEqual(1)
+    }
+
+    it.should("throw for double colons") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\":: 0}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for missing keys") {
+      var fiberWithError = Fiber.new { JSON.parse("{: 0}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for non-string keys") {
+      var fiberWithError = Fiber.new { JSON.parse("{1:1}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
   }
 }
 
