@@ -8,6 +8,26 @@ var TestJSON = Suite.new("JSON") { |it|
 
   it.suite("tokenize") { |it|
     it.should("handle basic string") {
+      var tokens = JSON.tokenize("\"sup\"")
+      Expect.call(tokens.count).toEqual(1)
+      Expect.call(tokens[0].type).toEqual(Token.String)
+    }
+
+    it.should("handle basic number") {
+      var tokens = JSON.tokenize("3")
+      Expect.call(tokens.count).toEqual(1)
+      Expect.call(tokens[0].type).toEqual(Token.Number)
+      Expect.call(tokens[0].value).toEqual(3)
+    }
+
+    it.should("handle basic bool") {
+      var tokens = JSON.tokenize("false")
+      Expect.call(tokens.count).toEqual(1)
+      Expect.call(tokens[0].type).toEqual(Token.Bool)
+      Expect.call(tokens[0].value).toEqual(false)
+    }
+
+    it.should("handle basic map") {
       var tokens = JSON.tokenize(mapString)
 
       Expect.call(tokens.count).toEqual(17)

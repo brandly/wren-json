@@ -131,9 +131,14 @@ class JSONScanner {
   construct new(input) {
     _input = input
     _tokens = []
+    // first unconsumed char
+    _start = 0
+    // char that will be considered next
+    _cursor = 0
   }
 
   numberChars { "0123456789.-" }
+  whitespace { " \r\t\n"}
   escapedCharMap {
     return {
       "\"": "\"",
@@ -147,121 +152,149 @@ class JSONScanner {
   }
 
   tokenize {
-    if (_tokens.count > 0) { _tokens }
-
-    var inString = false
-    var isEscaping = false
-    var inNumber = false
-    var valueInProgress = []
-    var lastIndex = _input.count - 1
-
-    var cursor = 0
-    while (cursor < _input.count) {
-      var char = _input[cursor]
-
-      if (inString) {
-
-        if (isEscaping) {
-          if (escapedCharMap.containsKey(char)) {
-            valueInProgress.add(escapedCharMap[char])
-          } else if (char == "u") { // unicode char!
-            var charsToPull = 4
-            var start = cursor + 1
-            var hexString = Helper.slice(_input, start, start + charsToPull).join("")
-
-            var decimal = Helper.hexToDecimal(hexString)
-            if (decimal == null) parsingError
-            valueInProgress.add(String.fromCodePoint(decimal))
-
-            cursor = cursor + charsToPull
-          } else {
-            parsingError
-          }
-
-          isEscaping = false
-        } else if (char == "\\") {
-          isEscaping = true
-
-        } else if (char == "\"") {
-          addToken(Token.String, valueInProgress.join(""))
-          valueInProgress = []
-          inString = false
-
-        } else {
-          valueInProgress.add(char)
-        }
-
-      } else if (char == "\"") {
-        inString = true
-
-      } else if (inNumber) {
-        if (numberChars.contains(char)) {
-          valueInProgress.add(char)
-        }
-
-        // Check last index to support bare numbers
-        if (!numberChars.contains(char) || cursor == lastIndex) {
-          var number = Num.fromString(valueInProgress.join(""))
-
-          if (number == null) {
-            parsingError
-          } else {
-            addToken(Token.Number, number)
-          }
-
-          valueInProgress = []
-          inNumber = false
-
-          // Since there's no terminal char for a Num, we have to wait
-          // until we run into a non-Num char. Then, we back up, so that
-          // char gets processed
-          cursor = cursor - 1
-        }
-      } else if (numberChars.contains(char)) {
-        valueInProgress.add(char)
-        inNumber = true
-
-        var peek = cursor < (_input.count - 1) ? _input[cursor + 1] : null
-        if (char == "0" && peek == "x") {
-          // Don't allow hex numbers
-          parsingError
-        }
-
-      } else if (char == "{") {
-        addToken(Token.LeftBrace)
-
-      } else if (char == "}") {
-        addToken(Token.RightBrace)
-
-      } else if (char == "[") {
-        addToken(Token.LeftBracket)
-
-      } else if (char == "]") {
-        addToken(Token.RightBracket)
-
-      } else if (char == ":") {
-        addToken(Token.Colon)
-
-      } else if (char == ",") {
-        addToken(Token.Comma)
-      } else if (char == "/") {
-        // Don't allow comments
-        parsingError
-      } else {
-        var slicedInput = Helper.slice(_input, cursor).join("")
-        if (slicedInput.startsWith("true")) {
-          addToken(Token.Bool, true)
-        } else if (slicedInput.startsWith("false")) {
-          addToken(Token.Bool, false)
-        } else if (slicedInput.startsWith("null")) {
-          addToken(Token.Null, null)
-        }
-      }
-
-      cursor = cursor + 1
+    while (!isAtEnd()) {
+      _start = _cursor
+      scanToken()
     }
 
     return _tokens
+  }
+
+  scanToken () {
+    var char = advance()
+
+    if (char == "{") {
+      addToken(Token.LeftBrace)
+    } else if (char == "}") {
+      addToken(Token.RightBrace)
+    } else if (char == "[") {
+      addToken(Token.LeftBracket)
+    } else if (char == "]") {
+      addToken(Token.RightBracket)
+    } else if (char == ":") {
+      addToken(Token.Colon)
+    } else if (char == ",") {
+      addToken(Token.Comma)
+    } else if (char == "/") {
+      // Don't allow comments
+      parsingError
+    } else if (char == "\"") {
+      scanString()
+    } else if (numberChars.contains(char)) {
+      scanNumber()
+    } else if (isAlpha(char)) {
+      scanIdentifier()
+    } else if (whitespace.contains(char)) {
+      // pass
+    } else {
+      parsingError
+    }
+  }
+
+  scanString () {
+    var isEscaping = false
+    var valueInProgress = []
+
+    while (peek() != "\"" && !isAtEnd()) {
+      var char = advance()
+
+      if (isEscaping) {
+        if (escapedCharMap.containsKey(char)) {
+          valueInProgress.add(escapedCharMap[char])
+        } else if (char == "u") { // unicode char!
+          var charsToPull = 4
+          var start = _cursor + 1
+          var hexString = Helper.slice(_input, start, start + charsToPull).join("")
+
+          var decimal = Helper.hexToDecimal(hexString)
+          if (decimal == null) parsingError
+          valueInProgress.add(String.fromCodePoint(decimal))
+
+          _cursor = _cursor + charsToPull
+        } else {
+          parsingError
+        }
+
+        isEscaping = false
+      } else if (char == "\\") {
+        isEscaping = true
+
+      } else {
+        valueInProgress.add(char)
+      }
+    }
+
+    if (isAtEnd()) {
+      // unterminated string
+      parsingError
+      return
+    }
+
+    // consume closing "
+    advance()
+
+    addToken(Token.String, valueInProgress.join(""))
+  }
+
+  scanNumber () {
+    while (numberChars.contains(peek())) {
+      advance()
+    }
+
+    var number = Num.fromString(Helper.slice(_input, _start, _cursor).join(""))
+
+    if (number == null) {
+      parsingError
+    } else {
+      addToken(Token.Number, number)
+    }
+  }
+
+  scanIdentifier () {
+    while (isAlpha(peek())) {
+      advance()
+    }
+
+    var value = Helper.slice(_input, _start, _cursor).join("")
+    if (value == "true") {
+      addToken(Token.Bool, true)
+    } else if (value == "false") {
+      addToken(Token.Bool, false)
+    } else if (value == "null") {
+      addToken(Token.Null, null)
+    } else {
+      parsingError
+    }
+  }
+
+  current () {
+    return _input[cursor]
+  }
+
+  advance () {
+    _cursor = _cursor + 1
+    return _input[_cursor - 1]
+  }
+
+  isAlpha (char) {
+    var pt = char.codePoints[0]
+    return (pt >= "a".codePoints[0] && pt <= "z".codePoints[0]) ||
+           (pt >= "A".codePoints[0] && pt <= "Z".codePoints[0])
+  }
+
+  isAtEnd () {
+    return _cursor >= _input.count
+  }
+
+  peek () {
+    if (isAtEnd()) return "\0"
+    return _input[_cursor]
+  }
+
+  nextCharIs (char) {
+    if (isAtEnd()) return false
+    if (_input[_cursor] != char) return false
+    return true
   }
 
   addToken(type) { addToken(type, null) }
