@@ -153,9 +153,9 @@ class JSONParser {
     var valueInProgress = []
     var lastIndex = _input.count - 1
 
-    var i = 0
-    while (i < _input.count) {
-      var char = _input[i]
+    var cursor = 0
+    while (cursor < _input.count) {
+      var char = _input[cursor]
 
       if (inString) {
 
@@ -164,14 +164,14 @@ class JSONParser {
             valueInProgress.add(escapedCharMap[char])
           } else if (char == "u") { // unicode char!
             var charsToPull = 4
-            var start = i + 1
+            var start = cursor + 1
             var hexString = Helper.slice(_input, start, start + charsToPull).join("")
 
             var decimal = Helper.hexToDecimal(hexString)
             if (decimal == null) parsingError
             valueInProgress.add(String.fromCodePoint(decimal))
 
-            i = i + charsToPull
+            cursor = cursor + charsToPull
           } else {
             parsingError
           }
@@ -198,7 +198,7 @@ class JSONParser {
         }
 
         // Check last index to support bare numbers
-        if (!numberChars.contains(char) || i == lastIndex) {
+        if (!numberChars.contains(char) || cursor == lastIndex) {
           var number = Num.fromString(valueInProgress.join(""))
 
           if (number == null) {
@@ -213,13 +213,13 @@ class JSONParser {
           // Since there's no terminal char for a Num, we have to wait
           // until we run into a non-Num char. Then, we back up, so that
           // char gets processed
-          i = i - 1
+          cursor = cursor - 1
         }
       } else if (numberChars.contains(char)) {
         valueInProgress.add(char)
         inNumber = true
 
-        var peek = i < (_input.count - 1) ? _input[i + 1] : null
+        var peek = cursor < (_input.count - 1) ? _input[cursor + 1] : null
         if (char == "0" && peek == "x") {
           // Don't allow hex numbers
           parsingError
@@ -246,7 +246,7 @@ class JSONParser {
         // Don't allow comments
         parsingError
       } else {
-        var slicedInput = Helper.slice(_input, i).join("")
+        var slicedInput = Helper.slice(_input, cursor).join("")
         if (slicedInput.startsWith("true")) {
           addToken(tokenBool, true)
         } else if (slicedInput.startsWith("false")) {
@@ -256,7 +256,7 @@ class JSONParser {
         }
       }
 
-      i = i + 1
+      cursor = cursor + 1
     }
 
     return _tokens
