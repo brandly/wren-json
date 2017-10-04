@@ -162,6 +162,16 @@ class JSONParser {
         if (isEscaping) {
           if (escapedCharMap.containsKey(char)) {
             valueInProgress.add(escapedCharMap[char])
+          } else if (char == "u") { // unicode char!
+            var charsToPull = 4
+            var start = i + 1
+            var hexString = Helper.slice(_input, start, start + charsToPull).join("")
+
+            var decimal = Helper.hexToDecimal(hexString)
+            if (decimal == null) parsingError
+            valueInProgress.add(String.fromCodePoint(decimal))
+
+            i = i + charsToPull
           } else {
             parsingError
           }
@@ -283,6 +293,35 @@ class Helper {
     var result = []
     for (index in start...end) {
       result.add(list[index])
+    }
+    return result
+  }
+  // shout out to http://www.permadi.com/tutorial/numHexToDec/
+  static hexToDecimal (str) {
+    var lastIndex = str.count - 1
+    var power = 0
+    var result = 0
+    for (char in reverse(str)) {
+      var num = Num.fromString(char)
+      if (num == null) return null
+      result = result + (num * exponent(16, power))
+      power = power + 1
+    }
+    return result
+  }
+  static reverse (str) {
+    var result = ""
+    for (char in str) {
+      result = char + result
+    }
+    return result
+  }
+  static exponent (value, power) {
+    if (power == 0) return 1
+
+    var result = value
+    for (i in 1...power) {
+      result = result * value
     }
     return result
   }
