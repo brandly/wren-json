@@ -66,18 +66,8 @@ class JSONParser {
     _tokens = []
   }
 
-  tokenLeftBracket { "LEFT_BRACKET" }
-  tokenRightBracket { "RIGHT_BRACKET" }
-  tokenLeftBrace { "LEFT_BRACE" }
-  tokenRightBrace { "RIGHT_BRACE" }
-  tokenColon { "COLON" }
-  tokenComma { "COMMA" }
-  tokenString { "STRING" }
-  tokenNumber { "NUMBER" }
-  tokenBool { "BOOL" }
-  tokenNull { "NULL"}
   numberChars { "0123456789.-" }
-  valueTypes { [tokenString, tokenNumber, tokenBool, tokenNull] }
+  valueTypes { [Token.String, Token.Number, Token.Bool, Token.Null] }
   escapedCharMap {
     return {
       "\"": "\"",
@@ -97,43 +87,43 @@ class JSONParser {
 
     var token = tokens.removeAt(0)
 
-    if (token.type == tokenLeftBrace) {
+    if (token.type == Token.LeftBrace) {
       // Making a Map
       var map = {}
 
-      while (tokens[0].type != tokenRightBrace) {
+      while (tokens[0].type != Token.RightBrace) {
         var key = tokens.removeAt(0)
-        if (key.type != tokenString) { parsingError }
+        if (key.type != Token.String) { parsingError }
 
-        if ((tokens.removeAt(0)).type != tokenColon) { parsingError }
+        if ((tokens.removeAt(0)).type != Token.Colon) { parsingError }
 
         var value = nest(tokens)
         map[key.value] = value
 
         if (tokens.count >= 2 &&
-            tokens[0].type == tokenComma &&
-            tokens[1].type != tokenRightBrace) {
+            tokens[0].type == Token.Comma &&
+            tokens[1].type != Token.RightBrace) {
           tokens.removeAt(0)
         }
       }
 
-      // Remove tokenRightBrace
+      // Remove Token.RightBrace
       tokens.removeAt(0)
 
       return map
 
-    } else if (token.type == tokenLeftBracket) {
+    } else if (token.type == Token.LeftBracket) {
       // Making a List
       var list = []
-      while (tokens[0].type != tokenRightBracket) {
+      while (tokens[0].type != Token.RightBracket) {
         list.add(nest(tokens))
 
-        if (tokens[0].type == tokenComma) {
+        if (tokens[0].type == Token.Comma) {
           tokens.removeAt(0)
         }
       }
 
-      // Remove tokenRightBracket
+      // Remove Token.RightBracket
       tokens.removeAt(0)
 
       return list
@@ -181,7 +171,7 @@ class JSONParser {
           isEscaping = true
 
         } else if (char == "\"") {
-          addToken(tokenString, valueInProgress.join(""))
+          addToken(Token.String, valueInProgress.join(""))
           valueInProgress = []
           inString = false
 
@@ -204,7 +194,7 @@ class JSONParser {
           if (number == null) {
             parsingError
           } else {
-            addToken(tokenNumber, number)
+            addToken(Token.Number, number)
           }
 
           valueInProgress = []
@@ -226,33 +216,33 @@ class JSONParser {
         }
 
       } else if (char == "{") {
-        addToken(tokenLeftBrace)
+        addToken(Token.LeftBrace)
 
       } else if (char == "}") {
-        addToken(tokenRightBrace)
+        addToken(Token.RightBrace)
 
       } else if (char == "[") {
-        addToken(tokenLeftBracket)
+        addToken(Token.LeftBracket)
 
       } else if (char == "]") {
-        addToken(tokenRightBracket)
+        addToken(Token.RightBracket)
 
       } else if (char == ":") {
-        addToken(tokenColon)
+        addToken(Token.Colon)
 
       } else if (char == ",") {
-        addToken(tokenComma)
+        addToken(Token.Comma)
       } else if (char == "/") {
         // Don't allow comments
         parsingError
       } else {
         var slicedInput = Helper.slice(_input, cursor).join("")
         if (slicedInput.startsWith("true")) {
-          addToken(tokenBool, true)
+          addToken(Token.Bool, true)
         } else if (slicedInput.startsWith("false")) {
-          addToken(tokenBool, false)
+          addToken(Token.Bool, false)
         } else if (slicedInput.startsWith("null")) {
-          addToken(tokenNull, null)
+          addToken(Token.Null, null)
         }
       }
 
@@ -271,6 +261,17 @@ class JSONParser {
 }
 
 class Token {
+  static LeftBracket { "LEFT_BRACKET" }
+  static RightBracket { "RIGHT_BRACKET" }
+  static LeftBrace { "LEFT_BRACE" }
+  static RightBrace { "RIGHT_BRACE" }
+  static Colon { "COLON" }
+  static Comma { "COMMA" }
+  static String { "STRING" }
+  static Number { "NUMBER" }
+  static Bool { "BOOL" }
+  static Null { "NULL"}
+
   construct new(type, value) {
     _type = type
     _value = value
