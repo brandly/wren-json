@@ -267,10 +267,6 @@ class JSONScanner {
     }
   }
 
-  current () {
-    return _input[cursor]
-  }
-
   advance () {
     _cursor = _cursor + 1
     return _input[_cursor - 1]
@@ -289,12 +285,6 @@ class JSONScanner {
   peek () {
     if (isAtEnd()) return "\0"
     return _input[_cursor]
-  }
-
-  nextCharIs (char) {
-    if (isAtEnd()) return false
-    if (_input[_cursor] != char) return false
-    return true
   }
 
   addToken(type) { addToken(type, null) }
