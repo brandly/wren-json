@@ -302,7 +302,9 @@ class JSONScanner {
   addToken(type, value) { _tokens.add(Token.new(type, value, _cursor)) }
 
   scanningError {
-    Fiber.abort("Invalid JSON")
+    var value = Helper.slice(_input, _start, _cursor).join("")
+    var position = Helper.getPositionForIndex(_input, _start)
+    Fiber.abort("Invalid JSON: Unexpected \"%(value)\" at line %(position["line"]), column %(position["column"])")
   }
 }
 
