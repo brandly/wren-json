@@ -195,7 +195,7 @@ class JSONScanner {
     var isEscaping = false
     var valueInProgress = []
 
-    while (peek() != "\"" && !isAtEnd()) {
+    while ((peek() != "\"" || isEscaping) && !isAtEnd()) {
       var char = advance()
 
       if (isEscaping) {
@@ -203,7 +203,7 @@ class JSONScanner {
           valueInProgress.add(escapedCharMap[char])
         } else if (char == "u") { // unicode char!
           var charsToPull = 4
-          var start = _cursor + 1
+          var start = _cursor
           var hexString = Helper.slice(_input, start, start + charsToPull).join("")
 
           var decimal = Helper.hexToDecimal(hexString)
