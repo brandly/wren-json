@@ -168,6 +168,8 @@ class JSONScanner {
       scanToken()
     }
 
+    addToken(Token.End)
+
     return _tokens
   }
 
@@ -319,6 +321,7 @@ class Token {
   static Number { "NUMBER" }
   static Bool { "BOOL" }
   static Null { "NULL"}
+  static End { "EOF"}
 
   construct new(type, value, index) {
     _type = type
