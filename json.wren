@@ -138,7 +138,7 @@ class JSONScanner {
   }
 
   numberChars { "0123456789.-" }
-  whitespace { " \r\t\n"}
+  whitespaceChars { " \r\t\n"}
   escapedCharMap {
     return {
       "\"": "\"",
@@ -184,7 +184,7 @@ class JSONScanner {
       scanNumber()
     } else if (isAlpha(char)) {
       scanIdentifier()
-    } else if (whitespace.contains(char)) {
+    } else if (whitespaceChars.contains(char)) {
       // pass
     } else {
       parsingError
