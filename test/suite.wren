@@ -19,6 +19,12 @@ var TestJSON = Suite.new("JSON") { |it|
       Expect.call(tokens[3].type).toEqual(parser.tokenNumber)
       Expect.call(tokens[4].type).toEqual(parser.tokenComma)
     }
+
+    it.should("handle unicode characters") {
+      var tokens = JSON.tokenize("\"\\u2618\"")
+      Expect.call(tokens[0].type).toEqual(parser.tokenString)
+      Expect.call(tokens[0].value).toEqual("☘")
+    }
   }
 
   it.suite("parse String") { |it|
@@ -272,6 +278,11 @@ var TestJSON = Suite.new("JSON") { |it|
     it.should("throw for non-string keys") {
       var fiberWithError = Fiber.new { JSON.parse("{1:1}") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("parse unicode keys") {
+      var value = JSON.parse("{\"\\u2618\": 11}")
+      Expect.call(value["☘"]).toEqual(11)
     }
   }
 }
