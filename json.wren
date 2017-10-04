@@ -9,7 +9,7 @@ class JSON {
   }
 
   static tokenize(string) {
-    return JSONParser.new(string).tokenize
+    return JSONScanner.new(string).tokenize
   }
 }
 
@@ -66,21 +66,9 @@ class JSONParser {
     _tokens = []
   }
 
-  numberChars { "0123456789.-" }
   valueTypes { [Token.String, Token.Number, Token.Bool, Token.Null] }
-  escapedCharMap {
-    return {
-      "\"": "\"",
-      "\\": "\\",
-      "b": "\b",
-      "f": "\f",
-      "n": "\n",
-      "r": "\r",
-      "t": "\t"
-    }
-  }
 
-  parse { nest(tokenize) }
+  parse { nest(JSONScanner.new(_input).tokenize) }
 
   nest(tokens) {
     if (tokens.count == 0) { parsingError }
@@ -132,6 +120,30 @@ class JSONParser {
       return token.value
 
     } else { parsingError }
+  }
+
+  parsingError {
+    Fiber.abort("Invalid JSON")
+  }
+}
+
+class JSONScanner {
+  construct new(input) {
+    _input = input
+    _tokens = []
+  }
+
+  numberChars { "0123456789.-" }
+  escapedCharMap {
+    return {
+      "\"": "\"",
+      "\\": "\\",
+      "b": "\b",
+      "f": "\f",
+      "n": "\n",
+      "r": "\r",
+      "t": "\t"
+    }
   }
 
   tokenize {

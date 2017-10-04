@@ -13,16 +13,16 @@ var TestJSON = Suite.new("JSON") { |it|
       Expect.call(tokens.count).toEqual(17)
       for (token in tokens) { Expect.call(token).toBe(Token) }
 
-      Expect.call(tokens[0].type).toEqual(parser.tokenLeftBrace)
-      Expect.call(tokens[1].type).toEqual(parser.tokenString)
-      Expect.call(tokens[2].type).toEqual(parser.tokenColon)
-      Expect.call(tokens[3].type).toEqual(parser.tokenNumber)
-      Expect.call(tokens[4].type).toEqual(parser.tokenComma)
+      Expect.call(tokens[0].type).toEqual(Token.LeftBrace)
+      Expect.call(tokens[1].type).toEqual(Token.String)
+      Expect.call(tokens[2].type).toEqual(Token.Colon)
+      Expect.call(tokens[3].type).toEqual(Token.Number)
+      Expect.call(tokens[4].type).toEqual(Token.Comma)
     }
 
     it.should("handle unicode characters") {
       var tokens = JSON.tokenize("\"\\u2618\"")
-      Expect.call(tokens[0].type).toEqual(parser.tokenString)
+      Expect.call(tokens[0].type).toEqual(Token.String)
       Expect.call(tokens[0].value).toEqual("☘")
     }
   }
