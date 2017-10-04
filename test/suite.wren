@@ -221,17 +221,17 @@ var TestJSON = Suite.new("JSON") { |it|
   it.suite("edge cases") { |it|
     it.should("throw for trailing commas") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0,}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"COMMA\" at line 0, column 9")
     }
 
     it.should("throw for comments") {
       var fiberWithError = Fiber.new { JSON.parse("{// here comes an id\n\"id\": 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"/\" at line 0, column 1")
     }
 
     it.should("throw for unclosed structures") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\":") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"EOF\" at line 0, column 6")
     }
 
     it.should("allow nested structures") {
@@ -247,17 +247,17 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for NaN") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": NaN}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"NaN\" at line 0, column 7")
     }
 
     it.should("throw for Infinity") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": Infinity}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"Infinity\" at line 0, column 7")
     }
 
     it.should("throw for hex numbers") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0xFF}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"xFF\" at line 0, column 8")
     }
 
     // TODO: Exponential Notation
@@ -271,12 +271,12 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for colon instead of comma") {
       var fiberWithError = Fiber.new { JSON.parse("[\"id\": 0]") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"COLON\" at line 0, column 6")
     }
 
     it.should("throw for comma instead of colon") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\", 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"COMMA\" at line 0, column 6")
     }
 
     it.should("handle empty keys") {
@@ -292,17 +292,17 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for double colons") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\":: 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"COLON\" at line 0, column 7")
     }
 
     it.should("throw for missing keys") {
       var fiberWithError = Fiber.new { JSON.parse("{: 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"COLON\" at line 0, column 2")
     }
 
     it.should("throw for non-string keys") {
       var fiberWithError = Fiber.new { JSON.parse("{1:1}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"NUMBER 1\" at line 0, column 2")
     }
 
     it.should("parse unicode keys") {
@@ -312,17 +312,17 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for extraneous text") {
       var fiberWithError = Fiber.new { JSON.parse("{\"wow\" nonsense :1}") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"nonsense\" at line 0, column 7")
     }
 
     it.should("throw for double brackets") {
       var fiberWithError = Fiber.new { JSON.parse("{{") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"LEFT_BRACE\" at line 0, column 2")
     }
 
     it.should("throw given an empty string") {
       var fiberWithError = Fiber.new { JSON.parse("") }
-      Expect.call(fiberWithError).toBeARuntimeError
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON: Unexpected \"EOF\" at line 0, column 0")
     }
   }
 }
