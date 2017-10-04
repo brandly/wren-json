@@ -284,6 +284,11 @@ var TestJSON = Suite.new("JSON") { |it|
       var value = JSON.parse("{\"\\u2618\": 11}")
       Expect.call(value["☘"]).toEqual(11)
     }
+
+    it.should("throw for extraneous text") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"wow\" nonsense :1}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
   }
 }
 
