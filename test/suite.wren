@@ -319,6 +319,11 @@ var TestJSON = Suite.new("JSON") { |it|
       var fiberWithError = Fiber.new { JSON.parse("{{") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
+
+    it.should("throw given an empty string") {
+      var fiberWithError = Fiber.new { JSON.parse("") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
   }
 }
 
