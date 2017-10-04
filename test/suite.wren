@@ -143,7 +143,7 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for a random slash") {
       var fiberWithError = Fiber.new { JSON.parse("\"hey \\man\"") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("handle bare numbers") {
@@ -221,17 +221,17 @@ var TestJSON = Suite.new("JSON") { |it|
   it.suite("edge cases") { |it|
     it.should("throw for trailing commas") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0,}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for comments") {
       var fiberWithError = Fiber.new { JSON.parse("{// here comes an id\n\"id\": 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for unclosed structures") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\":") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("allow nested structures") {
@@ -247,17 +247,17 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for NaN") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": NaN}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for Infinity") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": Infinity}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for hex numbers") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\": 0xFF}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     // TODO: Exponential Notation
@@ -271,12 +271,12 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for colon instead of comma") {
       var fiberWithError = Fiber.new { JSON.parse("[\"id\": 0]") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for comma instead of colon") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\", 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("handle empty keys") {
@@ -292,17 +292,17 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for double colons") {
       var fiberWithError = Fiber.new { JSON.parse("{\"id\":: 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for missing keys") {
       var fiberWithError = Fiber.new { JSON.parse("{: 0}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for non-string keys") {
       var fiberWithError = Fiber.new { JSON.parse("{1:1}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("parse unicode keys") {
@@ -312,17 +312,17 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for extraneous text") {
       var fiberWithError = Fiber.new { JSON.parse("{\"wow\" nonsense :1}") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw for double brackets") {
       var fiberWithError = Fiber.new { JSON.parse("{{") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
 
     it.should("throw given an empty string") {
       var fiberWithError = Fiber.new { JSON.parse("") }
-      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+      Expect.call(fiberWithError).toBeARuntimeError
     }
   }
 }
