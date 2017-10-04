@@ -9,7 +9,7 @@ class JSON {
   }
 
   static tokenize(string) {
-    return JSONParser.new(string).tokenize
+    return JSONScanner.new(string).tokenize
   }
 }
 
@@ -66,18 +66,79 @@ class JSONParser {
     _tokens = []
   }
 
-  tokenLeftBracket { "LEFT_BRACKET" }
-  tokenRightBracket { "RIGHT_BRACKET" }
-  tokenLeftBrace { "LEFT_BRACE" }
-  tokenRightBrace { "RIGHT_BRACE" }
-  tokenColon { "COLON" }
-  tokenComma { "COMMA" }
-  tokenString { "STRING" }
-  tokenNumber { "NUMBER" }
-  tokenBool { "BOOL" }
-  tokenNull { "NULL"}
+  valueTypes { [Token.String, Token.Number, Token.Bool, Token.Null] }
+
+  parse { nest(JSONScanner.new(_input).tokenize) }
+
+  nest(tokens) {
+    if (tokens.count == 0) { parsingError }
+
+    var token = tokens.removeAt(0)
+
+    if (token.type == Token.LeftBrace) {
+      // Making a Map
+      var map = {}
+
+      while (tokens[0].type != Token.RightBrace) {
+        var key = tokens.removeAt(0)
+        if (key.type != Token.String) { parsingError }
+
+        if ((tokens.removeAt(0)).type != Token.Colon) { parsingError }
+
+        var value = nest(tokens)
+        map[key.value] = value
+
+        if (tokens.count >= 2 &&
+            tokens[0].type == Token.Comma &&
+            tokens[1].type != Token.RightBrace) {
+          tokens.removeAt(0)
+        }
+      }
+
+      // Remove Token.RightBrace
+      tokens.removeAt(0)
+
+      return map
+
+    } else if (token.type == Token.LeftBracket) {
+      // Making a List
+      var list = []
+      while (tokens[0].type != Token.RightBracket) {
+        list.add(nest(tokens))
+
+        if (tokens[0].type == Token.Comma) {
+          tokens.removeAt(0)
+        }
+      }
+
+      // Remove Token.RightBracket
+      tokens.removeAt(0)
+
+      return list
+
+    } else if (valueTypes.contains(token.type)) {
+      return token.value
+
+    } else { parsingError }
+  }
+
+  parsingError {
+    Fiber.abort("Invalid JSON")
+  }
+}
+
+class JSONScanner {
+  construct new(input) {
+    _input = input
+    _tokens = []
+    // first unconsumed char
+    _start = 0
+    // char that will be considered next
+    _cursor = 0
+  }
+
   numberChars { "0123456789.-" }
-  valueTypes { [tokenString, tokenNumber, tokenBool, tokenNull] }
+  whitespaceChars { " \r\t\n"}
   escapedCharMap {
     return {
       "\"": "\"",
@@ -90,176 +151,150 @@ class JSONParser {
     }
   }
 
-  parse { nest(tokenize) }
-
-  nest(tokens) {
-    if (tokens.count == 0) { parsingError }
-
-    var token = tokens.removeAt(0)
-
-    if (token.type == tokenLeftBrace) {
-      // Making a Map
-      var map = {}
-
-      while (tokens[0].type != tokenRightBrace) {
-        var key = tokens.removeAt(0)
-        if (key.type != tokenString) { parsingError }
-
-        if ((tokens.removeAt(0)).type != tokenColon) { parsingError }
-
-        var value = nest(tokens)
-        map[key.value] = value
-
-        if (tokens.count >= 2 &&
-            tokens[0].type == tokenComma &&
-            tokens[1].type != tokenRightBrace) {
-          tokens.removeAt(0)
-        }
-      }
-
-      // Remove tokenRightBrace
-      tokens.removeAt(0)
-
-      return map
-
-    } else if (token.type == tokenLeftBracket) {
-      // Making a List
-      var list = []
-      while (tokens[0].type != tokenRightBracket) {
-        list.add(nest(tokens))
-
-        if (tokens[0].type == tokenComma) {
-          tokens.removeAt(0)
-        }
-      }
-
-      // Remove tokenRightBracket
-      tokens.removeAt(0)
-
-      return list
-
-    } else if (valueTypes.contains(token.type)) {
-      return token.value
-
-    } else { parsingError }
-  }
-
   tokenize {
-    if (_tokens.count > 0) { _tokens }
-
-    var inString = false
-    var isEscaping = false
-    var inNumber = false
-    var valueInProgress = []
-    var lastIndex = _input.count - 1
-
-    var i = 0
-    while (i < _input.count) {
-      var char = _input[i]
-
-      if (inString) {
-
-        if (isEscaping) {
-          if (escapedCharMap.containsKey(char)) {
-            valueInProgress.add(escapedCharMap[char])
-          } else if (char == "u") { // unicode char!
-            var charsToPull = 4
-            var start = i + 1
-            var hexString = Helper.slice(_input, start, start + charsToPull).join("")
-
-            var decimal = Helper.hexToDecimal(hexString)
-            if (decimal == null) parsingError
-            valueInProgress.add(String.fromCodePoint(decimal))
-
-            i = i + charsToPull
-          } else {
-            parsingError
-          }
-
-          isEscaping = false
-        } else if (char == "\\") {
-          isEscaping = true
-
-        } else if (char == "\"") {
-          addToken(tokenString, valueInProgress.join(""))
-          valueInProgress = []
-          inString = false
-
-        } else {
-          valueInProgress.add(char)
-        }
-
-      } else if (char == "\"") {
-        inString = true
-
-      } else if (inNumber) {
-        if (numberChars.contains(char)) {
-          valueInProgress.add(char)
-        }
-
-        // Check last index to support bare numbers
-        if (!numberChars.contains(char) || i == lastIndex) {
-          var number = Num.fromString(valueInProgress.join(""))
-
-          if (number == null) {
-            parsingError
-          } else {
-            addToken(tokenNumber, number)
-          }
-
-          valueInProgress = []
-          inNumber = false
-
-          // Since there's no terminal char for a Num, we have to wait
-          // until we run into a non-Num char. Then, we back up, so that
-          // char gets processed
-          i = i - 1
-        }
-      } else if (numberChars.contains(char)) {
-        valueInProgress.add(char)
-        inNumber = true
-
-        var peek = i < (_input.count - 1) ? _input[i + 1] : null
-        if (char == "0" && peek == "x") {
-          // Don't allow hex numbers
-          parsingError
-        }
-
-      } else if (char == "{") {
-        addToken(tokenLeftBrace)
-
-      } else if (char == "}") {
-        addToken(tokenRightBrace)
-
-      } else if (char == "[") {
-        addToken(tokenLeftBracket)
-
-      } else if (char == "]") {
-        addToken(tokenRightBracket)
-
-      } else if (char == ":") {
-        addToken(tokenColon)
-
-      } else if (char == ",") {
-        addToken(tokenComma)
-      } else if (char == "/") {
-        // Don't allow comments
-        parsingError
-      } else {
-        var slicedInput = Helper.slice(_input, i).join("")
-        if (slicedInput.startsWith("true")) {
-          addToken(tokenBool, true)
-        } else if (slicedInput.startsWith("false")) {
-          addToken(tokenBool, false)
-        } else if (slicedInput.startsWith("null")) {
-          addToken(tokenNull, null)
-        }
-      }
-
-      i = i + 1
+    while (!isAtEnd()) {
+      _start = _cursor
+      scanToken()
     }
 
     return _tokens
+  }
+
+  scanToken () {
+    var char = advance()
+
+    if (char == "{") {
+      addToken(Token.LeftBrace)
+    } else if (char == "}") {
+      addToken(Token.RightBrace)
+    } else if (char == "[") {
+      addToken(Token.LeftBracket)
+    } else if (char == "]") {
+      addToken(Token.RightBracket)
+    } else if (char == ":") {
+      addToken(Token.Colon)
+    } else if (char == ",") {
+      addToken(Token.Comma)
+    } else if (char == "/") {
+      // Don't allow comments
+      parsingError
+    } else if (char == "\"") {
+      scanString()
+    } else if (numberChars.contains(char)) {
+      scanNumber()
+    } else if (isAlpha(char)) {
+      scanIdentifier()
+    } else if (whitespaceChars.contains(char)) {
+      // pass
+    } else {
+      parsingError
+    }
+  }
+
+  scanString () {
+    var isEscaping = false
+    var valueInProgress = []
+
+    while ((peek() != "\"" || isEscaping) && !isAtEnd()) {
+      var char = advance()
+
+      if (isEscaping) {
+        if (escapedCharMap.containsKey(char)) {
+          valueInProgress.add(escapedCharMap[char])
+        } else if (char == "u") { // unicode char!
+          var charsToPull = 4
+          var start = _cursor
+          var hexString = Helper.slice(_input, start, start + charsToPull).join("")
+
+          var decimal = Helper.hexToDecimal(hexString)
+          if (decimal == null) parsingError
+          valueInProgress.add(String.fromCodePoint(decimal))
+
+          _cursor = _cursor + charsToPull
+        } else {
+          parsingError
+        }
+
+        isEscaping = false
+      } else if (char == "\\") {
+        isEscaping = true
+
+      } else {
+        valueInProgress.add(char)
+      }
+    }
+
+    if (isAtEnd()) {
+      // unterminated string
+      parsingError
+      return
+    }
+
+    // consume closing "
+    advance()
+
+    addToken(Token.String, valueInProgress.join(""))
+  }
+
+  scanNumber () {
+    while (numberChars.contains(peek())) {
+      advance()
+    }
+
+    var number = Num.fromString(Helper.slice(_input, _start, _cursor).join(""))
+
+    if (number == null) {
+      parsingError
+    } else {
+      addToken(Token.Number, number)
+    }
+  }
+
+  scanIdentifier () {
+    while (isAlpha(peek())) {
+      advance()
+    }
+
+    var value = Helper.slice(_input, _start, _cursor).join("")
+    if (value == "true") {
+      addToken(Token.Bool, true)
+    } else if (value == "false") {
+      addToken(Token.Bool, false)
+    } else if (value == "null") {
+      addToken(Token.Null, null)
+    } else {
+      parsingError
+    }
+  }
+
+  current () {
+    return _input[cursor]
+  }
+
+  advance () {
+    _cursor = _cursor + 1
+    return _input[_cursor - 1]
+  }
+
+  isAlpha (char) {
+    var pt = char.codePoints[0]
+    return (pt >= "a".codePoints[0] && pt <= "z".codePoints[0]) ||
+           (pt >= "A".codePoints[0] && pt <= "Z".codePoints[0])
+  }
+
+  isAtEnd () {
+    return _cursor >= _input.count
+  }
+
+  peek () {
+    if (isAtEnd()) return "\0"
+    return _input[_cursor]
+  }
+
+  nextCharIs (char) {
+    if (isAtEnd()) return false
+    if (_input[_cursor] != char) return false
+    return true
   }
 
   addToken(type) { addToken(type, null) }
@@ -271,6 +306,17 @@ class JSONParser {
 }
 
 class Token {
+  static LeftBracket { "LEFT_BRACKET" }
+  static RightBracket { "RIGHT_BRACKET" }
+  static LeftBrace { "LEFT_BRACE" }
+  static RightBrace { "RIGHT_BRACE" }
+  static Colon { "COLON" }
+  static Comma { "COMMA" }
+  static String { "STRING" }
+  static Number { "NUMBER" }
+  static Bool { "BOOL" }
+  static Null { "NULL"}
+
   construct new(type, value) {
     _type = type
     _value = value
