@@ -81,9 +81,10 @@ class JSONParser {
 
       while (tokens[0].type != Token.RightBrace) {
         var key = tokens.removeAt(0)
-        if (key.type != Token.String) { parsingError }
+        if (key.type != Token.String) { parsingError(key) }
 
-        if ((tokens.removeAt(0)).type != Token.Colon) { parsingError }
+        var next = tokens.removeAt(0)
+        if (next.type != Token.Colon) { parsingError(next) }
 
         var value = nest(tokens)
         map[key.value] = value
@@ -119,11 +120,21 @@ class JSONParser {
     } else if (valueTypes.contains(token.type)) {
       return token.value
 
-    } else { parsingError }
+    } else { parsingError(token) }
+  }
+
+  parsingError (token) {
+    var position = Helper.getPositionForIndex(_input, token.index)
+    invalidJSON("Unexpected \"%(token)\" at line %(position["line"]), column %(position["column"])")
   }
 
   parsingError {
-    Fiber.abort("Invalid JSON")
+    invalidJSON("")
+  }
+
+  invalidJSON(message) {
+    var base = "Invalid JSON"
+    Fiber.abort(message.count > 0 ? "%(base): %(message)" : base)
   }
 }
 
@@ -177,7 +188,7 @@ class JSONScanner {
       addToken(Token.Comma)
     } else if (char == "/") {
       // Don't allow comments
-      parsingError
+      scanningError
     } else if (char == "\"") {
       scanString()
     } else if (numberChars.contains(char)) {
@@ -187,7 +198,7 @@ class JSONScanner {
     } else if (whitespaceChars.contains(char)) {
       // pass
     } else {
-      parsingError
+      scanningError
     }
   }
 
@@ -207,12 +218,12 @@ class JSONScanner {
           var hexString = Helper.slice(_input, start, start + charsToPull).join("")
 
           var decimal = Helper.hexToDecimal(hexString)
-          if (decimal == null) parsingError
+          if (decimal == null) scanningError
           valueInProgress.add(String.fromCodePoint(decimal))
 
           _cursor = _cursor + charsToPull
         } else {
-          parsingError
+          scanningError
         }
 
         isEscaping = false
@@ -226,7 +237,7 @@ class JSONScanner {
 
     if (isAtEnd()) {
       // unterminated string
-      parsingError
+      scanningError
       return
     }
 
@@ -244,7 +255,7 @@ class JSONScanner {
     var number = Num.fromString(Helper.slice(_input, _start, _cursor).join(""))
 
     if (number == null) {
-      parsingError
+      scanningError
     } else {
       addToken(Token.Number, number)
     }
@@ -263,7 +274,7 @@ class JSONScanner {
     } else if (value == "null") {
       addToken(Token.Null, null)
     } else {
-      parsingError
+      scanningError
     }
   }
 
@@ -288,9 +299,9 @@ class JSONScanner {
   }
 
   addToken(type) { addToken(type, null) }
-  addToken(type, value) { _tokens.add(Token.new(type, value)) }
+  addToken(type, value) { _tokens.add(Token.new(type, value, _cursor)) }
 
-  parsingError {
+  scanningError {
     Fiber.abort("Invalid JSON")
   }
 }
@@ -307,9 +318,10 @@ class Token {
   static Bool { "BOOL" }
   static Null { "NULL"}
 
-  construct new(type, value) {
+  construct new(type, value, index) {
     _type = type
     _value = value
+    _index = index
   }
 
   toString {
@@ -318,6 +330,7 @@ class Token {
 
   type { _type }
   value { _value }
+  index { _index }
 }
 
 // TODO: use Pure when we have a nice module system
@@ -360,5 +373,24 @@ class Helper {
       result = result * value
     }
     return result
+  }
+  static getPositionForIndex (text, index) {
+    var precedingText = Helper.slice(text, 0, index)
+    var linebreaks = precedingText.where {|char| char == "\n"}
+
+    var reversedPreceding = Helper.reverse(precedingText)
+    var hasSeenLinebreak = false
+    var i = 0
+    while (i < reversedPreceding.count && !hasSeenLinebreak) {
+      if (reversedPreceding[i] == "\n") {
+        hasSeenLinebreak = true
+      }
+      i = i + 1
+    }
+
+    return {
+      "line": linebreaks.count,
+      "column": i
+    }
   }
 }

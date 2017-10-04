@@ -274,6 +274,11 @@ var TestJSON = Suite.new("JSON") { |it|
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
 
+    it.should("throw for comma instead of colon") {
+      var fiberWithError = Fiber.new { JSON.parse("{\"id\", 0}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
     it.should("handle empty keys") {
       var value = JSON.parse("{\"\": 0}")
       Expect.call(value[""]).toEqual(0)
@@ -307,6 +312,11 @@ var TestJSON = Suite.new("JSON") { |it|
 
     it.should("throw for extraneous text") {
       var fiberWithError = Fiber.new { JSON.parse("{\"wow\" nonsense :1}") }
+      Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
+    }
+
+    it.should("throw for double brackets") {
+      var fiberWithError = Fiber.new { JSON.parse("{{") }
       Expect.call(fiberWithError).toBeARuntimeError("Invalid JSON")
     }
   }
