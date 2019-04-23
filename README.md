@@ -1,6 +1,6 @@
 # JSON
 
-> Handling JSON for [Wren](https://munificent.github.io/wren/)
+> Handling JSON for [Wren](http://wren.io/)
 
 ## usage
 
