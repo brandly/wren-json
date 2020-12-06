@@ -1,4 +1,4 @@
-import "test-framework" for Expect, Suite, ConsoleReporter
+import "./test-framework" for Expect, Suite, ConsoleReporter
 import "../json" for JSON, JSONParser, Token
 
 var TestJSON = Suite.new("JSON") { |it|
