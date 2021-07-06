@@ -216,6 +216,10 @@ var TestJSON = Suite.new("JSON") { |it|
     it.should("handle horizontal tabs in strings") {
       Expect.call(JSON.stringify("hey \t man")).toEqual("\"hey \\t man\"")
     }
+
+    it.should("escape control characters") {
+      Expect.call(JSON.stringify(String.fromByte(1))).toEqual("\"\\u0001\"")
+    }
   }
 
   it.suite("edge cases") { |it|
