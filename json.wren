@@ -41,6 +41,11 @@ class JSONStringifier {
           substrings.add("\\r")
         } else if (char == "\t") {
           substrings.add("\\t")
+        } else if (char.bytes[0] <= 0x1f) {
+          // Control characters!
+          var byte = char.bytes[0]
+          var hex = Helper.lpad(Helper.toHex(byte), 4, "0")
+          substrings.add("\\u" + hex)
         } else {
           substrings.add(char)
         }
@@ -338,6 +343,10 @@ class Token {
   index { _index }
 }
 
+var HEX_CHARS = [
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"
+]
+
 // TODO: use Pure when we have a nice module system
 class Helper {
   static slice(list, start) {
@@ -362,6 +371,21 @@ class Helper {
       power = power + 1
     }
     return result
+  }
+  static toHex(byte) {
+    var hex = ""
+    while (byte > 0) {
+      var c = byte % 16
+      hex = HEX_CHARS[c] + hex
+      byte = byte >> 4
+    }
+    return hex
+  }
+  static lpad(s, count, with) {
+    while (s.count < count) {
+      s = "%(with)%(s)"
+    }
+    return s
   }
   static reverse (str) {
     var result = ""
